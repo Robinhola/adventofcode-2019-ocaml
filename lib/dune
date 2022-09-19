@@ -1,0 +1,4 @@
+(library
+ (name advent_2019)
+ (libraries base core)
+ (modules_without_implementation day))
