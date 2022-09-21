@@ -1,4 +1,7 @@
 (library
  (name advent_2019)
- (libraries base core)
- (modules_without_implementation day))
+ (inline_tests)
+ (libraries base core ppx_let)
+ (modules_without_implementation day)
+ (preprocess
+  (pps ppx_jane ppx_inline_test)))

@@ -83,7 +83,8 @@ replace position 1 with the value 12 and replace position 2 with the value 2.
 What value is left at position 0 after the program halts? *)
 
 let input =
-  List.map (String.split ~on:',' (Stdio.In_channel.read_all "input/day02.in")) ~f:int_of_string
+  try List.map (String.split ~on:',' (Stdio.In_channel.read_all "input/day02.in")) ~f:int_of_string with
+  _ -> []
 ;;
 
 module T : sig

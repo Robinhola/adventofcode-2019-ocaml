@@ -25,7 +25,8 @@ What is the sum of the fuel requirements for all of the modules on your
 spacecraft? *)
 
 let lines =
-  List.map (Stdio.In_channel.read_lines "input/day01.in") ~f:int_of_string
+  try List.map (Stdio.In_channel.read_lines "input/day01.in") ~f:int_of_string with
+  _ -> []
 ;;
 
 module T : sig
