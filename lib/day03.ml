@@ -125,7 +125,7 @@ end = struct
     in
     let intersections = Set.to_list (Set.inter (find_wire_positions 0) (find_wire_positions 1)) in
     let closest_intersection = List.min_elt intersections ~compare:(fun a b -> Coord.distance a - Coord.distance b) in
-    printf "part1:\t%i\n" (Coord.distance (Option.value_exn closest_intersection))
+    printf "part1:\t%i\n" (Option.value_exn closest_intersection |> Coord.distance )
   ;;
 
   (* --- Part Two ---
@@ -175,7 +175,7 @@ end = struct
       let wire_moves = List.nth_exn lines id in 
       Map.map
         (move_wire CoordMap.empty (0, 0) wire_moves 0)
-        ~f:(fun l -> Option.value_exn (List.min_elt l ~compare:Int.compare))
+        ~f:(fun l -> List.min_elt l ~compare:Int.compare |> Option.value_exn)
     in
     let first = find_wire_positions 0 in 
     let second = find_wire_positions 1 in
