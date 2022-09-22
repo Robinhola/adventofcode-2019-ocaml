@@ -170,9 +170,7 @@ end = struct
   intersection?
   *)
 
-  let part2 () =
-    (* let lines = [["R75";"D30";"R83";"U83";"L12";"D49";"R71";"U7";"L72"]; ["U62";"R66";"U55";"R34";"D71";"R55";"D58";"R83"]] in  *)
-    (* let lines = [["R98";"U47";"R26";"D63";"R33";"U87";"L62";"D20";"R33";"U53";"R51"]; ["U98";"R91";"D20";"R16";"D67";"R40";"U7";"R15";"U6";"R7"]] in  *)
+  let solve_part2 lines = 
     let find_wire_positions id = 
       let wire_moves = List.nth_exn lines id in 
       Map.map
@@ -183,8 +181,25 @@ end = struct
     let second = find_wire_positions 1 in
     let intersections = Set.to_list (Set.inter (Map.key_set first) (Map.key_set second)) in
     let distance c = (Map.find_exn first c) + (Map.find_exn second c) in
-    let closest_intersection = List.min_elt intersections ~compare:(fun a b -> distance a - distance b) |> Option.value_exn in
-    printf "part2:\t%i\n" (distance closest_intersection);
+    let compare a b = distance a - distance b in 
+    let closest_intersection = List.min_elt intersections ~compare |> Option.value_exn in
+    distance closest_intersection
+  ;;
+
+  let%expect_test "distance" =
+    let lines1 = [
+      ["R75";"D30";"R83";"U83";"L12";"D49";"R71";"U7";"L72"];
+      ["U62";"R66";"U55";"R34";"D71";"R55";"D58";"R83"]
+    ] in
+    let lines2 = [
+      ["R98";"U47";"R26";"D63";"R33";"U87";"L62";"D20";"R33";"U53";"R51"];
+      ["U98";"R91";"D20";"R16";"D67";"R40";"U7";"R15";"U6";"R7"]
+    ] in
+    printf "%d %d" (solve_part2 lines1) (solve_part2 lines2);
+    [%expect {| 610 410 |}]
+
+  let part2 () =
+    printf "part2:\t%i\n" (solve_part2 lines);
   ;;
 
 end
