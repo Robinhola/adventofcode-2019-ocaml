@@ -3,10 +3,10 @@ open! Core
 
 
 module Orbiting_object = struct
-  type t = 
+  type t =
   { name : string
   ; is_orbited_by : string list
-  ; orbit_around : string list 
+  ; orbit_around : string list
   } [@@deriving sexp_of]
 
   let default name = { name; is_orbited_by = []; orbit_around = [] }
@@ -17,35 +17,35 @@ module Orbiting_object = struct
     |> Option.value ~default:(default name)
   ;;
 
-  let rec add_to orbiting_objects = function 
+  let rec add_to orbiting_objects = function
     | [] -> orbiting_objects
-    | o :: rest -> 
+    | o :: rest ->
       let orbiting_objects = Map.set orbiting_objects ~key:o.name ~data:o in
       add_to orbiting_objects rest
   ;;
 
   let add_to_is_orbited_by orbiting_objects ~name ~by =
     let t = get_or_create orbiting_objects name in
-    let t = { t with is_orbited_by = by :: t.is_orbited_by} in 
-    let by = get_or_create orbiting_objects by in 
-    let by = { by with orbit_around = name :: by.is_orbited_by} in 
+    let t = { t with is_orbited_by = by :: t.is_orbited_by} in
+    let by = get_or_create orbiting_objects by in
+    let by = { by with orbit_around = name :: by.is_orbited_by} in
     add_to orbiting_objects [ t; by ]
   ;;
 
   let add_to_orbit_around orbiting_objects ~name ~around =
     let t = get_or_create orbiting_objects name in
-    let t = { t with orbit_around = around :: t.orbit_around} in 
-    let around = get_or_create orbiting_objects around in 
-    let around = { around with orbit_around = name :: around.orbit_around} in 
+    let t = { t with orbit_around = around :: t.orbit_around} in
+    let around = get_or_create orbiting_objects around in
+    let around = { around with orbit_around = name :: around.orbit_around} in
     add_to orbiting_objects [ t; around ]
   ;;
 
   let update orbiting_objects line =
     match line |> String.split ~on:')' with
-    | heavy :: light :: [] -> 
+    | heavy :: light :: [] ->
       orbiting_objects
       |> add_to_is_orbited_by ~name:heavy ~by:light
-      |> add_to_orbit_around ~name:light ~around:heavy
+      (* |> add_to_orbit_around ~name:light ~around:heavy *)
     | _ -> failwith "unsupported"
   ;;
 
@@ -61,25 +61,41 @@ module Orbiting_object = struct
       )
   ;;
 
-  let rec breath_first_search orbiting_objects ~start ~goal ~distance ~to_visit ~seen =
-    if phys_equal start goal then Some distance
-    else 
-      let distance = distance + 1 in
-      let t = start |> Map.find_exn orbiting_objects in 
-      t.orbit_around @ t.is_orbited_by
-      |> List.filter ~f:(fun e -> not (Set.exists seen ~f:(phys_equal e)))
+  let breath_first_search orbiting_objects ~start ~goal =
+    let next_to_visit element =
+      let element = Map.find_exn orbiting_objects element in
+      element.orbit_around @ element.is_orbited_by
+    in
+    let was_not_in seen element = seen
+      |> Set.exists ~f:(String.equal element)
+      |> not
+    in
+    let to_visit = next_to_visit start
+      |> List.map ~f:(fun e -> e, 0)
+      |> Queue.of_list
+    in
+    let update_to_visit distance next_elements =
+      next_elements
+      |> List.map ~f:(fun e -> e, distance + 1)
       |> List.iter ~f:(Queue.enqueue to_visit);
-      let element = ref None in
-      while not (Queue.is_empty to_visit) do
-        let start = Queue.dequeue_exn to_visit in
-        let seen = start |> Set.add seen in
-        element := breath_first_search orbiting_objects ~start ~goal ~distance ~to_visit ~seen;
-      done;
-      !element
+    in
+    let rec look_for ~seen =
+      let element = Queue.dequeue to_visit in
+      match element with
+      | None -> failwith "could not find"
+      | Some (element, distance) when String.equal element goal -> distance - 1
+      | Some (element, distance) ->
+        let next_elements = next_to_visit element
+          |> List.filter ~f:(was_not_in seen)
+        in
+        next_elements |> update_to_visit distance;
+        look_for ~seen:(Set.union seen (String.Set.of_list next_elements))
+    in
+    look_for ~seen:(String.Set.of_list ["YOU"])
   ;;
 end
 
-let lines = 
+let lines =
   Stdio.In_channel.read_lines "input/day06.in"
 ;;
 
@@ -104,7 +120,13 @@ end = struct
   let part2 () =
     let start = "YOU" in
     let goal = "SAN" in
-    let distance = Orbiting_object.breath_first_search orbiting_objects ~start ~goal ~distance:0 ~to_visit:(Queue.create ()) ~seen:String.Set.empty in
-    printf "part2:\t%i\n" (distance |> Option.value_exn)
+    (* print_s [%message (orbiting_objects: Orbiting_object.t String.Map.t)]; *)
+    let distance =
+      Orbiting_object.breath_first_search
+      orbiting_objects
+      ~start
+      ~goal
+    in
+    printf "part2:\t%i\n" distance
   ;;
 end
